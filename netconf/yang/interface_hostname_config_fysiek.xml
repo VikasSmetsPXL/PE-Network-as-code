@@ -1,0 +1,21 @@
+<config>
+    <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
+        <hostname>LAB-RA04-C01-R01</hostname>
+    </native>
+    <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
+        <interface>
+            <name>GigabitEthernet0/0/2</name>
+            <description>Geconfigureerd via NETCONF automatisatie</description>
+            <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">
+                ianaift:ethernetCsmacd
+            </type>
+            <enabled>true</enabled>
+            <ipv4 xmlns="urn:ietf:params:xml:ns:yang:ietf-ip">
+                <address>
+                    <ip>172.17.4.33</ip>
+                    <netmask>255.255.255.240</netmask>
+                </address>
+            </ipv4>
+        </interface>
+    </interfaces>
+</config>
