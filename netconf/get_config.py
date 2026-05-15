@@ -5,6 +5,10 @@ import xmltodict
 import json
 import sys
 import os
+import paramiko
+
+# Fix voor oudere Cisco IOS-XE SSH algoritmes (enkel virtuele router)
+paramiko.Transport._preferred_keys = ('ssh-rsa',) + paramiko.Transport._preferred_keys
 
 # Config importeren
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -25,7 +29,6 @@ def get_interfaces():
     print(f"Verbinden met router: {ROUTER_HOST}:{ROUTER_PORT}")
     print(f"{'='*50}")
 
-    # Verbindingsparameters
     connect_params = {
         "host": ROUTER_HOST,
         "port": ROUTER_PORT,
@@ -38,37 +41,27 @@ def get_interfaces():
         "timeout": 30,
     }
 
-    # Enkel nodig voor virtuele CSR1000v in VirtualBox
-    if VIRTUAL_ROUTER:
-        connect_params["disabled_algorithms"] = dict(pubkeys=["rsa-sha2-512", "rsa-sha2-256"])
-
     try:
         with manager.connect(**connect_params) as m:
 
             print("✅ NETCONF verbinding geslaagd!\n")
 
-            # Config ophalen
             response = m.get_config(source='running', filter=filter_xml)
 
-            # ---- XML verwerking ----
             xml_data = response.xml
             print("📄 Ruwe XML response ontvangen")
 
-            # XML opslaan
             os.makedirs('../output', exist_ok=True)
             with open('../output/interfaces.xml', 'w') as f:
                 f.write(xml_data)
             print("💾 XML opgeslagen in output/interfaces.xml")
 
-            # XML → dict → JSON (deserialisatie)
             parsed = xmltodict.parse(xml_data)
 
-            # JSON opslaan
             with open('../output/interfaces.json', 'w') as f:
                 json.dump(parsed, f, indent=4)
             print("💾 JSON opgeslagen in output/interfaces.json\n")
 
-            # Leesbare output tonen
             print(f"{'='*50}")
             print("🌐 INTERFACES OP DE ROUTER:")
             print(f"{'='*50}")
@@ -84,8 +77,8 @@ def get_interfaces():
                 interfaces = [interfaces]
 
             for intf in interfaces:
-                naam   = intf.get('name', 'onbekend')
-                type_  = intf.get('type', {}).get('#text', 'onbekend') if isinstance(intf.get('type'), dict) else intf.get('type', 'onbekend')
+                naam    = intf.get('name', 'onbekend')
+                type_   = intf.get('type', {}).get('#text', 'onbekend') if isinstance(intf.get('type'), dict) else intf.get('type', 'onbekend')
                 enabled = intf.get('enabled', 'onbekend')
                 print(f"  Interface : {naam}")
                 print(f"  Type      : {type_}")
