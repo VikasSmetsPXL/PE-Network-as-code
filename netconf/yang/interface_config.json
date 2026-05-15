@@ -1,0 +1,9 @@
+{
+    "interface": {
+        "name": "GigabitEthernet2",
+        "description": "Geconfigureerd via NETCONF automatisatie",
+        "enabled": true,
+        "ip_address": "10.0.0.1",
+        "subnet_mask": "255.255.255.0"
+    }
+}
