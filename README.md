@@ -8,6 +8,8 @@ Dit project automatiseert de configuratie van een Cisco IOS-XE router via **NETC
 ---
 
 ## 🏗️ Projectstructuur
+
+```text
 PE-Network-as-code/
 │
 ├── config.py
@@ -30,6 +32,7 @@ PE-Network-as-code/
 │   └── restconf_get.py
 │
 └── output/
+```
 
 ---
 
@@ -115,7 +118,7 @@ python restconf_get.py
 
 ## 🗂️ Infrastructure as Code
 
-Alle XML configuratiebestanden worden opgehaald van GitHub via raw URLs:
+Alle XML configuratiebestanden worden opgehaald van GitHub via raw URLs:  
 https://raw.githubusercontent.com/VIKASSmetsPXL/PE-Network-as-code/main/netconf/yang/
 
 GitHub is de **single source of truth** — wijzig een XML bestand op GitHub en het script gebruikt automatisch de nieuwe configuratie.
@@ -144,5 +147,5 @@ GitHub is de **single source of truth** — wijzig een XML bestand op GitHub en 
 
 ## 👤 Auteur
 
-**Vikas Smets** — PXL Hogeschool
+**Vikas Smets** — PXL Hogeschool  
 PE Networks — Network as Code
