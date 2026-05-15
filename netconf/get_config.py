@@ -5,14 +5,10 @@ import xmltodict
 import json
 import sys
 import os
-import paramiko
-
-# Fix voor oudere Cisco IOS-XE SSH algoritmes (enkel virtuele router)
-paramiko.Transport._preferred_keys = ('ssh-rsa',) + paramiko.Transport._preferred_keys
 
 # Config importeren
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from config import ROUTER_HOST, ROUTER_PORT, ROUTER_USER, ROUTER_PASS, VIRTUAL_ROUTER
+from config import ROUTER_HOST, ROUTER_PORT, ROUTER_USER, ROUTER_PASS
 
 def get_interfaces():
     """Haalt interface configuratie op via NETCONF en parsed XML naar JSON."""
