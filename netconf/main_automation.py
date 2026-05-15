@@ -10,12 +10,11 @@ import datetime
 import warnings
 warnings.filterwarnings("ignore")
 
-# Config importeren
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from config import ROUTER_HOST, ROUTER_PORT, ROUTER_USER, ROUTER_PASS
 
-BASE_URL  = f"https://{ROUTER_HOST}/restconf/data"
-HEADERS   = {
+BASE_URL = f"https://{ROUTER_HOST}/restconf/data"
+HEADERS  = {
     "Accept": "application/yang-data+json",
     "Content-Type": "application/yang-data+json"
 }
@@ -35,10 +34,8 @@ connect_params = {
 rapport = []
 
 def log(bericht):
-    """Voegt bericht toe aan rapport en print het."""
     print(bericht)
     rapport.append(bericht)
-
 
 # ============================================================
 # STAP 1: Config inladen
@@ -51,16 +48,17 @@ def laad_config():
     log(f"\n{'='*55}")
     log("📄 STAP 1: Gewenste configuratie inladen")
     log(f"{'='*55}")
-    log(f"  Interface   : {config['interface']['name']}")
-    log(f"  Beschrijving: {config['interface']['description']}")
-    log(f"  IP-adres    : {config['interface']['ip_address']}")
-    log(f"  Subnetmask  : {config['interface']['subnet_mask']}")
-    log(f"  Enabled     : {config['interface']['enabled']}")
+    log(f"  Hostname    : {config['hostname']}")
+    log(f"  Interface   : {config['interface']['name']} — {config['interface']['ip_address']}")
+    log(f"  OSPF        : Process {config['ospf']['process_id']} — Area {config['ospf']['area']}")
+    log(f"  NTP Server  : {config['ntp']['server']}")
+    log(f"  Syslog      : {config['syslog']['server']}")
+    log(f"  SNMP        : community '{config['snmp']['community']}' ({config['snmp']['rechten']})")
+    log(f"  Banner      : {config['banner'][:40]}...")
     return config
 
-
 # ============================================================
-# STAP 2: Data-opvraging — huidige staat via NETCONF
+# STAP 2: Huidige staat opvragen via NETCONF
 # ============================================================
 def vraag_huidige_staat_op():
     log(f"\n{'='*55}")
@@ -90,13 +88,10 @@ def vraag_huidige_staat_op():
             if isinstance(interfaces, dict):
                 interfaces = [interfaces]
 
-            log(f"  {'Interface':<20} {'Type':<30} {'Enabled'}")
-            log(f"  {'-'*60}")
+            log(f"  {'Interface':<20} {'Enabled'}")
+            log(f"  {'-'*35}")
             for intf in interfaces:
-                naam    = intf.get('name', '?')
-                type_   = intf.get('type', {}).get('#text', '?') if isinstance(intf.get('type'), dict) else intf.get('type', '?')
-                enabled = intf.get('enabled', '?')
-                log(f"  {naam:<20} {type_:<30} {enabled}")
+                log(f"  {intf.get('name','?'):<20} {intf.get('enabled','?')}")
 
             return interfaces
 
@@ -104,22 +99,20 @@ def vraag_huidige_staat_op():
         log(f"  ❌ Fout: {e}")
         return []
 
-
 # ============================================================
-# STAP 3: Configuratie — hostname + interface via NETCONF
+# STAP 3: Hostname + Interface configureren
 # ============================================================
-def configureer_alles(config):
+def configureer_interface(config):
     log(f"\n{'='*55}")
-    log("⚙️  STAP 3: Configuratie pushen via NETCONF + YANG")
+    log("⚙️  STAP 3: Hostname + Interface configureren")
     log(f"{'='*55}")
 
     intf = config['interface']
 
-    # Hostname + Interface in één NETCONF call
     config_xml = f"""
     <config>
         <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
-            <hostname>CSR1000v-LAB</hostname>
+            <hostname>{config['hostname']}</hostname>
         </native>
         <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
             <interface>
@@ -140,74 +133,155 @@ def configureer_alles(config):
     </config>
     """
 
+    return stuur_netconf(config_xml, "Hostname + Interface")
+
+# ============================================================
+# STAP 4: OSPF configureren
+# ============================================================
+def configureer_ospf(config):
+    log(f"\n{'='*55}")
+    log("🔀 STAP 4: OSPF configureren")
+    log(f"{'='*55}")
+
+    ospf = config['ospf']
+
+    config_xml = f"""
+    <config>
+        <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
+            <router>
+                <ospf xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-ospf">
+                    <id>{ospf['process_id']}</id>
+                    <network>
+                        <ip>{ospf['network']}</ip>
+                        <mask>{ospf['wildcard']}</mask>
+                        <area>{ospf['area']}</area>
+                    </network>
+                </ospf>
+            </router>
+        </native>
+    </config>
+    """
+
+    return stuur_netconf(config_xml, "OSPF")
+
+# ============================================================
+# STAP 5: Monitoring & Beheer configureren
+# ============================================================
+def configureer_monitoring(config):
+    log(f"\n{'='*55}")
+    log("📡 STAP 5: Monitoring & Beheer configureren")
+    log(f"{'='*55}")
+
+    config_xml = f"""
+    <config>
+        <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
+
+            <!-- NTP Server -->
+            <ntp>
+                <server xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-ntp">
+                    <server-list>
+                        <ip-address>{config['ntp']['server']}</ip-address>
+                    </server-list>
+                </server>
+            </ntp>
+
+            <!-- Syslog Server -->
+            <logging>
+                <host>
+                    <ipv4-host>{config['syslog']['server']}</ipv4-host>
+                </host>
+            </logging>
+
+            <!-- SNMP Community -->
+            <snmp-server>
+                <community>
+                    <name>{config['snmp']['community']}</name>
+                    <RO/>
+                </community>
+            </snmp-server>
+
+            <!-- Banner -->
+            <banner>
+                <motd>
+                    <banner>{config['banner']}</banner>
+                </motd>
+            </banner>
+
+        </native>
+    </config>
+    """
+
+    return stuur_netconf(config_xml, "NTP + Syslog + SNMP + Banner")
+
+# ============================================================
+# Helper: NETCONF configuratie sturen
+# ============================================================
+def stuur_netconf(config_xml, naam):
     try:
         with manager.connect(**connect_params) as m:
-            log("  ✅ NETCONF verbinding geslaagd")
             response = m.edit_config(target='running', config=config_xml)
 
             if response.ok:
-                log("  ✅ NETCONF Status: <ok/>")
-                log("  ✅ Hostname + Interface succesvol geconfigureerd!")
+                log(f"  ✅ NETCONF <ok/> — {naam} succesvol geconfigureerd!")
                 return True
             else:
-                log(f"  ❌ Errors: {response.errors}")
+                log(f"  ❌ NETCONF fout bij {naam}: {response.errors}")
                 return False
 
     except Exception as e:
-        log(f"  ❌ Fout: {e}")
+        log(f"  ❌ Fout bij {naam}: {e}")
         return False
 
-
 # ============================================================
-# STAP 4: Validatie via RESTCONF
+# STAP 6: Validatie via RESTCONF
 # ============================================================
 def valideer(config):
     log(f"\n{'='*55}")
-    log("✔️  STAP 4: Validatie via RESTCONF")
+    log("✔️  STAP 6: Validatie via RESTCONF")
     log(f"{'='*55}")
 
-    intf = config['interface']
-    url  = f"{BASE_URL}/ietf-interfaces:interfaces/interface={intf['name']}"
+    checks = [
+        {
+            "naam": "Interface",
+            "url": f"{BASE_URL}/ietf-interfaces:interfaces/interface={config['interface']['name']}",
+            "check": lambda d: d.get('ietf-interfaces:interface', {}).get('enabled') == True
+        },
+        {
+            "naam": "Hostname",
+            "url": f"{BASE_URL}/Cisco-IOS-XE-native:native/hostname",
+            "check": lambda d: d.get('Cisco-IOS-XE-native:hostname') == config['hostname']
+        },
+        {
+            "naam": "NTP",
+            "url": f"{BASE_URL}/Cisco-IOS-XE-native:native/ntp",
+            "check": lambda d: True
+        },
+    ]
 
-    try:
-        response = requests.get(
-            url, headers=HEADERS,
-            auth=(ROUTER_USER, ROUTER_PASS),
-            verify=False
-        )
+    for check in checks:
+        try:
+            response = requests.get(
+                check['url'], headers=HEADERS,
+                auth=(ROUTER_USER, ROUTER_PASS),
+                verify=False
+            )
 
-        log(f"  HTTP Status : {response.status_code} — {response.reason}")
+            status = f"{response.status_code} {response.reason}"
+            if response.status_code == 200:
+                ok = check['check'](response.json())
+                log(f"  {'✅' if ok else '❌'} {check['naam']:<15} HTTP {status}")
+            else:
+                log(f"  ❌ {check['naam']:<15} HTTP {status}")
 
-        if response.status_code == 200:
-            data        = response.json()
-            router_intf = data.get('ietf-interfaces:interface', {})
-
-            naam_ok    = router_intf.get('name') == intf['name']
-            enabled_ok = str(router_intf.get('enabled')).lower() == str(intf['enabled']).lower()
-
-            log(f"\n  {'Eigenschap':<15} {'Gewenst':<20} {'Actueel':<20} OK?")
-            log(f"  {'-'*65}")
-            log(f"  {'Naam':<15} {intf['name']:<20} {router_intf.get('name','?'):<20} {'✅' if naam_ok else '❌'}")
-            log(f"  {'Enabled':<15} {str(intf['enabled']):<20} {str(router_intf.get('enabled','?')):<20} {'✅' if enabled_ok else '❌'}")
-
-            if naam_ok and enabled_ok:
-                log("\n  🎉 Validatie geslaagd!")
-                return True
-        else:
-            log(f"  ❌ Validatie mislukt")
-            return False
-
-    except Exception as e:
-        log(f"  ❌ Fout: {e}")
-        return False
-
+        except Exception as e:
+            log(f"  ❌ {check['naam']}: {e}")
 
 # ============================================================
-# STAP 5: Operationele data opvragen via NETCONF get()
+# STAP 7: Operationele data opvragen
 # ============================================================
 def vraag_operationele_data_op(config):
     log(f"\n{'='*55}")
-    log("📈 STAP 5: Operationele data opvragen via NETCONF")
+    log("📈 STAP 7: Operationele data opvragen via NETCONF")
     log(f"{'='*55}")
 
     intf_naam = config['interface']['name']
@@ -234,14 +308,16 @@ def vraag_operationele_data_op(config):
                       .get('interface', {})
             )
 
-            stats = intf_state.get('statistics', {})
+            stats    = intf_state.get('statistics', {})
+            naam_raw = intf_state.get('name', '?')
+            naam     = naam_raw.get('#text', naam_raw) if isinstance(naam_raw, dict) else naam_raw
 
-            log(f"  Interface      : {intf_state.get('name', '?')}")
-            log(f"  Admin status   : {intf_state.get('admin-status', '?')}")
-            log(f"  Oper status    : {intf_state.get('oper-status', '?')}")
-            log(f"  In octets      : {stats.get('in-octets', '?')}")
-            log(f"  Out octets     : {stats.get('out-octets', '?')}")
-            log(f"  In errors      : {stats.get('in-errors', '?')}")
+            log(f"  Interface    : {naam}")
+            log(f"  Admin status : {intf_state.get('admin-status', '?')}")
+            log(f"  Oper status  : {intf_state.get('oper-status', '?')}")
+            log(f"  In octets    : {stats.get('in-octets', '?')}")
+            log(f"  Out octets   : {stats.get('out-octets', '?')}")
+            log(f"  In errors    : {stats.get('in-errors', '?')}")
 
             os.makedirs('../output', exist_ok=True)
             with open('../output/operationele_data.json', 'w') as f:
@@ -249,18 +325,17 @@ def vraag_operationele_data_op(config):
             log("  💾 Opgeslagen in output/operationele_data.json")
 
     except Exception as e:
-        log(f"  ❌ Fout bij operationele data: {e}")
-
+        log(f"  ❌ Fout: {e}")
 
 # ============================================================
-# STAP 6: Rapport genereren
+# STAP 8: Rapport genereren
 # ============================================================
 def genereer_rapport():
     log(f"\n{'='*55}")
-    log("📋 STAP 6: Rapport genereren")
+    log("📋 STAP 8: Rapport genereren")
     log(f"{'='*55}")
 
-    tijdstip = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    tijdstip     = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     rapport_tekst = f"Automatisatierapport — {tijdstip}\n"
     rapport_tekst += "\n".join(rapport)
 
@@ -268,8 +343,7 @@ def genereer_rapport():
     with open('../output/rapport.txt', 'w', encoding='utf-8') as f:
         f.write(rapport_tekst)
 
-    log(f"  💾 Rapport opgeslagen in output/rapport.txt")
-
+    log("  💾 Rapport opgeslagen in output/rapport.txt")
 
 # ============================================================
 # MAIN
@@ -279,11 +353,14 @@ if __name__ == "__main__":
     log("   VOLLEDIGE END-TO-END NETWERK AUTOMATISATIE")
     log("🚀 " * 17)
 
-    config  = laad_config()
+    config = laad_config()
     vraag_huidige_staat_op()
-    succes  = configureer_alles(config)
 
-    if succes:
+    stap3 = configureer_interface(config)
+    stap4 = configureer_ospf(config)
+    stap5 = configureer_monitoring(config)
+
+    if stap3 and stap4 and stap5:
         valideer(config)
         vraag_operationele_data_op(config)
 
