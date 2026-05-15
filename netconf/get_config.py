@@ -8,12 +8,11 @@ import os
 
 # Config importeren
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from config import ROUTER_HOST, ROUTER_PORT, ROUTER_USER, ROUTER_PASS
+from config import ROUTER_HOST, ROUTER_PORT, ROUTER_USER, ROUTER_PASS, VIRTUAL_ROUTER
 
 def get_interfaces():
     """Haalt interface configuratie op via NETCONF en parsed XML naar JSON."""
 
-    # NETCONF filter: enkel interfaces opvragen
     filter_xml = """
     <filter>
         <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
@@ -26,15 +25,25 @@ def get_interfaces():
     print(f"Verbinden met router: {ROUTER_HOST}:{ROUTER_PORT}")
     print(f"{'='*50}")
 
+    # Verbindingsparameters
+    connect_params = {
+        "host": ROUTER_HOST,
+        "port": ROUTER_PORT,
+        "username": ROUTER_USER,
+        "password": ROUTER_PASS,
+        "hostkey_verify": False,
+        "look_for_keys": False,
+        "allow_agent": False,
+        "device_params": {"name": "iosxe"},
+        "timeout": 30,
+    }
+
+    # Enkel nodig voor virtuele CSR1000v in VirtualBox
+    if VIRTUAL_ROUTER:
+        connect_params["disabled_algorithms"] = dict(pubkeys=["rsa-sha2-512", "rsa-sha2-256"])
+
     try:
-        with manager.connect(
-            host=ROUTER_HOST,
-            port=ROUTER_PORT,
-            username=ROUTER_USER,
-            password=ROUTER_PASS,
-            hostkey_verify=False,
-            device_params={'name': 'iosxe'}
-        ) as m:
+        with manager.connect(**connect_params) as m:
 
             print("✅ NETCONF verbinding geslaagd!\n")
 
@@ -75,8 +84,8 @@ def get_interfaces():
                 interfaces = [interfaces]
 
             for intf in interfaces:
-                naam  = intf.get('name', 'onbekend')
-                type_ = intf.get('type', {}).get('#text', 'onbekend') if isinstance(intf.get('type'), dict) else intf.get('type', 'onbekend')
+                naam   = intf.get('name', 'onbekend')
+                type_  = intf.get('type', {}).get('#text', 'onbekend') if isinstance(intf.get('type'), dict) else intf.get('type', 'onbekend')
                 enabled = intf.get('enabled', 'onbekend')
                 print(f"  Interface : {naam}")
                 print(f"  Type      : {type_}")
