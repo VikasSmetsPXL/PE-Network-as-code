@@ -219,6 +219,14 @@ def configureer_monitoring(config):
 def stuur_netconf(config_xml, naam):
     try:
         with manager.connect(**connect_params) as m:
+
+            # Raw XML tonen die verstuurd wordt
+            log(f"  📤 Raw NETCONF XML verstuurd:")
+            log(f"  {'-'*45}")
+            for lijn in config_xml.strip().splitlines():
+                log(f"  {lijn}")
+            log(f"  {'-'*45}")
+
             response = m.edit_config(target='running', config=config_xml)
 
             if response.ok:
@@ -260,11 +268,19 @@ def valideer(config):
 
     for check in checks:
         try:
+            # Raw URL tonen
+            log(f"\n  📤 Raw RESTCONF URL:")
+            log(f"  GET {check['url']}")
+
             response = requests.get(
                 check['url'], headers=HEADERS,
                 auth=(ROUTER_USER, ROUTER_PASS),
                 verify=False
             )
+
+            # Raw response tonen
+            log(f"  📥 Raw response:")
+            log(f"  {response.text[:200]}...")
 
             status = f"{response.status_code} {response.reason}"
             if response.status_code == 200:
