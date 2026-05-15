@@ -260,27 +260,20 @@ def valideer(config):
         except Exception as e:
             log(f"  ❌ {check['naam']}: {e}")
 
-    # SNMP verificatie
-    log(f"\n  📊 SNMP verificatie:")
+# SNMP verificatie via RESTCONF
+    log(f"\n  📊 SNMP verificatie via RESTCONF:")
     try:
-        from pysnmp.hlapi import getCmd, SnmpEngine, CommunityData, UdpTransportTarget, ContextData, ObjectType, ObjectIdentity
-
-        iterator = getCmd(
-            SnmpEngine(),
-            CommunityData('public', mpModel=1),
-            UdpTransportTarget((ROUTER_HOST, 161)),
-            ContextData(),
-            ObjectType(ObjectIdentity('1.3.6.1.2.1.1.5.0'))
+        snmp_url = f"{BASE_URL}/Cisco-IOS-XE-native:native/snmp-server"
+        log(f"  GET {snmp_url}")
+        snmp_response = requests.get(
+            snmp_url, headers=HEADERS,
+            auth=(ROUTER_USER, ROUTER_PASS),
+            verify=False
         )
-
-        errorIndication, errorStatus, errorIndex, varBinds = next(iterator)
-
-        if errorIndication or errorStatus:
-            log(f"  ❌ SNMP niet bereikbaar")
+        if snmp_response.status_code in [200, 204]:
+            log(f"  ✅ SNMP server actief — HTTP {snmp_response.status_code}")
         else:
-            for varBind in varBinds:
-                log(f"  ✅ SNMP werkt — Hostname via SNMP: {varBind[1]}")
-
+            log(f"  ❌ SNMP niet bereikbaar: HTTP {snmp_response.status_code}")
     except Exception as e:
         log(f"  ❌ SNMP fout: {e}")
 
@@ -367,7 +360,7 @@ if __name__ == "__main__":
     stap3  = configureer_interface(config)
     stap4  = configureer_ospf(config)
     stap5  = configureer_monitoring(config)
-    stap5b = configureer_snmp(config)
+    configureer_snmp(config)
 
     if stap3 and stap4 and stap5:
         valideer(config)

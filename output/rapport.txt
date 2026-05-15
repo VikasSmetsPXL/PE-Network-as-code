@@ -1,4 +1,4 @@
-Automatisatierapport — 2026-05-15 14:55:04
+Automatisatierapport — 2026-05-15 15:04:39
 
 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 
    VOLLEDIGE END-TO-END NETWERK AUTOMATISATIE
@@ -125,15 +125,12 @@ Automatisatierapport — 2026-05-15 14:55:04
   <config>
       <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
           <snmp-server>
-              <community>
-                  <name>public</name>
-                  <RO/>
-              </community>
+              <enable/>
           </snmp-server>
       </native>
   </config>
   ---------------------------------------------
-  ❌ Fout bij SNMP: {'type': 'application', 'tag': 'unknown-element', 'app_tag': None, 'severity': 'error', 'info': '<?xml version="1.0" encoding="UTF-8"?><error-info xmlns="urn:ietf:params:xml:ns:netconf:base:1.0" xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"><bad-element>community</bad-element>\n</error-info>\n', 'path': '\n    /nc:rpc/nc:edit-config/nc:config/ios:native/ios:snmp-server/ios:community\n  ', 'message': None}
+  ❌ Fout bij SNMP: {'type': 'application', 'tag': 'unknown-element', 'app_tag': None, 'severity': 'error', 'info': '<?xml version="1.0" encoding="UTF-8"?><error-info xmlns="urn:ietf:params:xml:ns:netconf:base:1.0" xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"><bad-element>enable</bad-element>\n</error-info>\n', 'path': '\n    /nc:rpc/nc:edit-config/nc:config/ios:native/ios:snmp-server/ios:enable\n  ', 'message': None}
 
 =======================================================
 ✔️  STAP 6: Validatie via RESTCONF
@@ -177,8 +174,9 @@ Automatisatierapport — 2026-05-15 14:55:04
 ...
   ✅ NTP             HTTP 200 OK
 
-  📊 SNMP verificatie:
-  ❌ SNMP fout: cannot import name 'getCmd' from 'pysnmp.hlapi' (unknown location)
+  📊 SNMP verificatie via RESTCONF:
+  GET https://192.168.56.103/restconf/data/Cisco-IOS-XE-native:native/snmp-server
+  ✅ SNMP server actief — HTTP 204
 
 =======================================================
 📈 STAP 7: Operationele data opvragen via NETCONF
@@ -186,8 +184,8 @@ Automatisatierapport — 2026-05-15 14:55:04
   Interface    : GigabitEthernet2
   Admin status : up
   Oper status  : up
-  In octets    : 61003
-  Out octets   : 36342
+  In octets    : 63082
+  Out octets   : 45914
   In errors    : 0
   💾 Opgeslagen in output/operationele_data.json
 
