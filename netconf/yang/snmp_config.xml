@@ -1,0 +1,10 @@
+<config>
+    <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
+        <snmp-server>
+            <community>
+                <name>public</name>
+                <RO/>
+            </community>
+        </snmp-server>
+    </native>
+</config>
