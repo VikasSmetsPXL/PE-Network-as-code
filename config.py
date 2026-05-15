@@ -1,6 +1,6 @@
 # config.py
 
-VIRTUAL_ROUTER = True
+VIRTUAL_ROUTER = False
 
 if VIRTUAL_ROUTER:
     ROUTER_HOST = "192.168.56.103"
