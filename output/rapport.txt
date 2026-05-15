@@ -1,4 +1,4 @@
-Automatisatierapport — 2026-05-15 15:04:39
+Automatisatierapport — 2026-05-15 15:23:15
 
 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 
    VOLLEDIGE END-TO-END NETWERK AUTOMATISATIE
@@ -115,22 +115,29 @@ Automatisatierapport — 2026-05-15 15:04:39
   ✅ NETCONF <ok/> — NTP + Banner succesvol geconfigureerd!
 
 =======================================================
-🔒 STAP 5b: SNMP configureren
+🔒 STAP 5b: SNMP configureren via RESTCONF
 =======================================================
-  📥 XML ophalen van GitHub:
-  https://raw.githubusercontent.com/VIKASSmetsPXL/PE-Network-as-code/main/netconf/yang/snmp_config.xml
-  ✅ XML succesvol opgehaald (HTTP 200)
-  📤 Raw NETCONF XML verstuurd:
-  ---------------------------------------------
-  <config>
-      <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
-          <snmp-server>
-              <enable/>
-          </snmp-server>
-      </native>
-  </config>
-  ---------------------------------------------
-  ❌ Fout bij SNMP: {'type': 'application', 'tag': 'unknown-element', 'app_tag': None, 'severity': 'error', 'info': '<?xml version="1.0" encoding="UTF-8"?><error-info xmlns="urn:ietf:params:xml:ns:netconf:base:1.0" xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"><bad-element>enable</bad-element>\n</error-info>\n', 'path': '\n    /nc:rpc/nc:edit-config/nc:config/ios:native/ios:snmp-server/ios:enable\n  ', 'message': None}
+  📤 Raw RESTCONF URL:
+  PUT https://192.168.56.103/restconf/data/Cisco-IOS-XE-native:native/snmp-server
+  📤 Body: {
+  "Cisco-IOS-XE-native:snmp-server": {
+    "community": [
+      {
+        "name": "public",
+        "RO": [
+          null
+        ]
+      }
+    ]
+  }
+}
+  📥 HTTP Status: 400 Bad Request
+  ❌ SNMP configuratie mislukt: {
+  "errors": {
+    "error": [
+      {
+        "error-message": "unknown element: community in /ios:native/ios:snmp-server/ios:community",
+        "error-path": "/Cisco-IOS-XE-native:native/snmp-serve
 
 =======================================================
 ✔️  STAP 6: Validatie via RESTCONF
@@ -176,7 +183,7 @@ Automatisatierapport — 2026-05-15 15:04:39
 
   📊 SNMP verificatie via RESTCONF:
   GET https://192.168.56.103/restconf/data/Cisco-IOS-XE-native:native/snmp-server
-  ✅ SNMP server actief — HTTP 204
+  ✅ SNMP server actief — HTTP 200
 
 =======================================================
 📈 STAP 7: Operationele data opvragen via NETCONF
@@ -184,8 +191,8 @@ Automatisatierapport — 2026-05-15 15:04:39
   Interface    : GigabitEthernet2
   Admin status : up
   Oper status  : up
-  In octets    : 63082
-  Out octets   : 45914
+  In octets    : 66997
+  Out octets   : 64448
   In errors    : 0
   💾 Opgeslagen in output/operationele_data.json
 

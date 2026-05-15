@@ -11,7 +11,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from config import ROUTER_HOST, ROUTER_PORT, ROUTER_USER, ROUTER_PASS
+from config import ROUTER_HOST, ROUTER_PORT, ROUTER_USER, ROUTER_PASS, YANG_SUFFIX
 
 BASE_URL = f"https://{ROUTER_HOST}/restconf/data"
 HEADERS  = {
@@ -37,8 +37,8 @@ connect_params = {
 GITHUB_RAW_BASE = "https://raw.githubusercontent.com/VIKASSmetsPXL/PE-Network-as-code/main/netconf/yang"
 
 YANG_URLS = {
-    "interface":  f"{GITHUB_RAW_BASE}/interface_hostname_config.xml",
-    "ospf":       f"{GITHUB_RAW_BASE}/ospf_config.xml",
+    "interface":  f"{GITHUB_RAW_BASE}/interface_hostname_config{YANG_SUFFIX}.xml",
+    "ospf":       f"{GITHUB_RAW_BASE}/ospf_config{YANG_SUFFIX}.xml",
     "monitoring": f"{GITHUB_RAW_BASE}/monitoring_config.xml",
     "snmp":       f"{GITHUB_RAW_BASE}/snmp_config.xml",
 }
@@ -185,7 +185,7 @@ def configureer_ospf(config):
     return stuur_netconf(config_xml, "OSPF")
 
 # ============================================================
-# STAP 5: Monitoring & Beheer configureren
+# STAP 5: NTP + Banner configureren
 # ============================================================
 def configureer_monitoring(config):
     log(f"\n{'='*55}")
@@ -198,17 +198,50 @@ def configureer_monitoring(config):
     return stuur_netconf(config_xml, "NTP + Banner")
 
 # ============================================================
-# STAP 5b: SNMP configureren
+# STAP 5b: SNMP configureren via RESTCONF
 # ============================================================
 def configureer_snmp(config):
     log(f"\n{'='*55}")
-    log("🔒 STAP 5b: SNMP configureren")
+    log("🔒 STAP 5b: SNMP configureren via RESTCONF")
     log(f"{'='*55}")
 
-    config_xml = haal_xml_op("snmp")
-    if not config_xml:
+    url  = f"{BASE_URL}/Cisco-IOS-XE-native:native/snmp-server"
+    body = {
+        "Cisco-IOS-XE-native:snmp-server": {
+            "community": [
+                {
+                    "name": config['snmp']['community'],
+                    "RO": [None]
+                }
+            ]
+        }
+    }
+
+    log(f"  📤 Raw RESTCONF URL:")
+    log(f"  PUT {url}")
+    log(f"  📤 Body: {json.dumps(body, indent=2)}")
+
+    try:
+        response = requests.put(
+            url,
+            headers=HEADERS,
+            auth=(ROUTER_USER, ROUTER_PASS),
+            json=body,
+            verify=False
+        )
+
+        log(f"  📥 HTTP Status: {response.status_code} {response.reason}")
+
+        if response.status_code in [200, 201, 204]:
+            log(f"  ✅ SNMP succesvol geconfigureerd via RESTCONF!")
+            return True
+        else:
+            log(f"  ❌ SNMP configuratie mislukt: {response.text[:200]}")
+            return False
+
+    except Exception as e:
+        log(f"  ❌ Fout: {e}")
         return False
-    return stuur_netconf(config_xml, "SNMP")
 
 # ============================================================
 # STAP 6: Validatie via RESTCONF
@@ -260,7 +293,7 @@ def valideer(config):
         except Exception as e:
             log(f"  ❌ {check['naam']}: {e}")
 
-# SNMP verificatie via RESTCONF
+    # SNMP verificatie via RESTCONF
     log(f"\n  📊 SNMP verificatie via RESTCONF:")
     try:
         snmp_url = f"{BASE_URL}/Cisco-IOS-XE-native:native/snmp-server"
