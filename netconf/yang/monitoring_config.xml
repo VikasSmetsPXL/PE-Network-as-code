@@ -1,0 +1,21 @@
+<config>
+    <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
+
+        <!-- NTP Server -->
+        <ntp>
+            <server xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-ntp">
+                <server-list>
+                    <ip-address>216.239.35.0</ip-address>
+                </server-list>
+            </server>
+        </ntp>
+
+        <!-- Banner -->
+        <banner>
+            <motd>
+                <banner>*** Beheerd via NETCONF automatisatie - Onbevoegde toegang verboden ***</banner>
+            </motd>
+        </banner>
+
+    </native>
+</config>
