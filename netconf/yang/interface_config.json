@@ -5,5 +5,23 @@
         "enabled": true,
         "ip_address": "10.0.0.1",
         "subnet_mask": "255.255.255.0"
-    }
+    },
+    "hostname": "CSR1000v-LAB",
+    "ospf": {
+        "process_id": 1,
+        "network": "10.0.0.0",
+        "wildcard": "0.0.0.255",
+        "area": 0
+    },
+    "ntp": {
+        "server": "216.239.35.0"
+    },
+    "syslog": {
+        "server": "192.168.56.1"
+    },
+    "snmp": {
+        "community": "public",
+        "rechten": "RO"
+    },
+    "banner": "*** Beheerd via NETCONF automatisatie - Onbevoegde toegang verboden ***"
 }
