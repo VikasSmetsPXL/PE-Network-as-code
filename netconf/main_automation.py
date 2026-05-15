@@ -31,11 +31,70 @@ connect_params = {
     "timeout": 30,
 }
 
+# ============================================================
+# GitHub raw URLs voor YANG XML configuraties
+# ============================================================
+GITHUB_RAW_BASE = "https://raw.githubusercontent.com/VIKASSmetsPXL/PE-Network-as-code/main/netconf/yang"
+
+YANG_URLS = {
+    "interface":  f"{GITHUB_RAW_BASE}/interface_hostname_config.xml",
+    "ospf":       f"{GITHUB_RAW_BASE}/ospf_config.xml",
+    "monitoring": f"{GITHUB_RAW_BASE}/monitoring_config.xml",
+    "snmp":       f"{GITHUB_RAW_BASE}/snmp_config.xml",
+}
+
 rapport = []
 
 def log(bericht):
     print(bericht)
     rapport.append(bericht)
+
+# ============================================================
+# Helper: XML ophalen van GitHub
+# ============================================================
+def haal_xml_op(naam):
+    """Haalt XML configuratie op van GitHub als single source of truth."""
+    url = YANG_URLS[naam]
+    log(f"  📥 XML ophalen van GitHub:")
+    log(f"  {url}")
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            log(f"  ✅ XML succesvol opgehaald (HTTP {response.status_code})")
+            return response.text
+        else:
+            log(f"  ❌ Fout bij ophalen XML: HTTP {response.status_code}")
+            return None
+    except Exception as e:
+        log(f"  ❌ Fout bij ophalen XML: {e}")
+        return None
+
+# ============================================================
+# Helper: NETCONF configuratie sturen
+# ============================================================
+def stuur_netconf(config_xml, naam):
+    """Stuurt XML configuratie naar router via NETCONF en toont raw XML."""
+    try:
+        with manager.connect(**connect_params) as m:
+
+            log(f"  📤 Raw NETCONF XML verstuurd:")
+            log(f"  {'-'*45}")
+            for lijn in config_xml.strip().splitlines():
+                log(f"  {lijn}")
+            log(f"  {'-'*45}")
+
+            response = m.edit_config(target='running', config=config_xml)
+
+            if response.ok:
+                log(f"  ✅ NETCONF <ok/> — {naam} succesvol geconfigureerd!")
+                return True
+            else:
+                log(f"  ❌ NETCONF fout bij {naam}: {response.errors}")
+                return False
+
+    except Exception as e:
+        log(f"  ❌ Fout bij {naam}: {e}")
+        return False
 
 # ============================================================
 # STAP 1: Config inladen
@@ -107,32 +166,9 @@ def configureer_interface(config):
     log("⚙️  STAP 3: Hostname + Interface configureren")
     log(f"{'='*55}")
 
-    intf = config['interface']
-
-    config_xml = f"""
-    <config>
-        <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
-            <hostname>{config['hostname']}</hostname>
-        </native>
-        <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
-            <interface>
-                <name>{intf['name']}</name>
-                <description>{intf['description']}</description>
-                <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">
-                    ianaift:ethernetCsmacd
-                </type>
-                <enabled>{str(intf['enabled']).lower()}</enabled>
-                <ipv4 xmlns="urn:ietf:params:xml:ns:yang:ietf-ip">
-                    <address>
-                        <ip>{intf['ip_address']}</ip>
-                        <netmask>{intf['subnet_mask']}</netmask>
-                    </address>
-                </ipv4>
-            </interface>
-        </interfaces>
-    </config>
-    """
-
+    config_xml = haal_xml_op("interface")
+    if not config_xml:
+        return False
     return stuur_netconf(config_xml, "Hostname + Interface")
 
 # ============================================================
@@ -143,25 +179,9 @@ def configureer_ospf(config):
     log("🔀 STAP 4: OSPF configureren")
     log(f"{'='*55}")
 
-    ospf = config['ospf']
-
-    config_xml = f"""
-    <config>
-        <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
-            <router>
-                <ospf xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-ospf">
-                    <id>{ospf['process_id']}</id>
-                    <network>
-                        <ip>{ospf['network']}</ip>
-                        <mask>{ospf['wildcard']}</mask>
-                        <area>{ospf['area']}</area>
-                    </network>
-                </ospf>
-            </router>
-        </native>
-    </config>
-    """
-
+    config_xml = haal_xml_op("ospf")
+    if not config_xml:
+        return False
     return stuur_netconf(config_xml, "OSPF")
 
 # ============================================================
@@ -169,76 +189,26 @@ def configureer_ospf(config):
 # ============================================================
 def configureer_monitoring(config):
     log(f"\n{'='*55}")
-    log("📡 STAP 5: Monitoring & Beheer configureren")
+    log("📡 STAP 5: NTP + Banner configureren")
     log(f"{'='*55}")
 
-    config_xml = f"""
-    <config>
-        <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
-
-            <!-- NTP Server -->
-            <ntp>
-                <server xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-ntp">
-                    <server-list>
-                        <ip-address>{config['ntp']['server']}</ip-address>
-                    </server-list>
-                </server>
-            </ntp>
-
-            <!-- Syslog Server -->
-            <logging>
-                <host>
-                    <ipv4-host>{config['syslog']['server']}</ipv4-host>
-                </host>
-            </logging>
-
-            <!-- SNMP Community -->
-            <snmp-server>
-                <community>
-                    <name>{config['snmp']['community']}</name>
-                    <RO/>
-                </community>
-            </snmp-server>
-
-            <!-- Banner -->
-            <banner>
-                <motd>
-                    <banner>{config['banner']}</banner>
-                </motd>
-            </banner>
-
-        </native>
-    </config>
-    """
-
-    return stuur_netconf(config_xml, "NTP + Syslog + SNMP + Banner")
-
-# ============================================================
-# Helper: NETCONF configuratie sturen
-# ============================================================
-def stuur_netconf(config_xml, naam):
-    try:
-        with manager.connect(**connect_params) as m:
-
-            # Raw XML tonen die verstuurd wordt
-            log(f"  📤 Raw NETCONF XML verstuurd:")
-            log(f"  {'-'*45}")
-            for lijn in config_xml.strip().splitlines():
-                log(f"  {lijn}")
-            log(f"  {'-'*45}")
-
-            response = m.edit_config(target='running', config=config_xml)
-
-            if response.ok:
-                log(f"  ✅ NETCONF <ok/> — {naam} succesvol geconfigureerd!")
-                return True
-            else:
-                log(f"  ❌ NETCONF fout bij {naam}: {response.errors}")
-                return False
-
-    except Exception as e:
-        log(f"  ❌ Fout bij {naam}: {e}")
+    config_xml = haal_xml_op("monitoring")
+    if not config_xml:
         return False
+    return stuur_netconf(config_xml, "NTP + Banner")
+
+# ============================================================
+# STAP 5b: SNMP configureren
+# ============================================================
+def configureer_snmp(config):
+    log(f"\n{'='*55}")
+    log("🔒 STAP 5b: SNMP configureren")
+    log(f"{'='*55}")
+
+    config_xml = haal_xml_op("snmp")
+    if not config_xml:
+        return False
+    return stuur_netconf(config_xml, "SNMP")
 
 # ============================================================
 # STAP 6: Validatie via RESTCONF
@@ -268,7 +238,6 @@ def valideer(config):
 
     for check in checks:
         try:
-            # Raw URL tonen
             log(f"\n  📤 Raw RESTCONF URL:")
             log(f"  GET {check['url']}")
 
@@ -278,7 +247,6 @@ def valideer(config):
                 verify=False
             )
 
-            # Raw response tonen
             log(f"  📥 Raw response:")
             log(f"  {response.text[:200]}...")
 
@@ -291,6 +259,30 @@ def valideer(config):
 
         except Exception as e:
             log(f"  ❌ {check['naam']}: {e}")
+
+    # SNMP verificatie
+    log(f"\n  📊 SNMP verificatie:")
+    try:
+        from pysnmp.hlapi import getCmd, SnmpEngine, CommunityData, UdpTransportTarget, ContextData, ObjectType, ObjectIdentity
+
+        iterator = getCmd(
+            SnmpEngine(),
+            CommunityData('public', mpModel=1),
+            UdpTransportTarget((ROUTER_HOST, 161)),
+            ContextData(),
+            ObjectType(ObjectIdentity('1.3.6.1.2.1.1.5.0'))
+        )
+
+        errorIndication, errorStatus, errorIndex, varBinds = next(iterator)
+
+        if errorIndication or errorStatus:
+            log(f"  ❌ SNMP niet bereikbaar")
+        else:
+            for varBind in varBinds:
+                log(f"  ✅ SNMP werkt — Hostname via SNMP: {varBind[1]}")
+
+    except Exception as e:
+        log(f"  ❌ SNMP fout: {e}")
 
 # ============================================================
 # STAP 7: Operationele data opvragen
@@ -351,7 +343,7 @@ def genereer_rapport():
     log("📋 STAP 8: Rapport genereren")
     log(f"{'='*55}")
 
-    tijdstip     = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    tijdstip      = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     rapport_tekst = f"Automatisatierapport — {tijdstip}\n"
     rapport_tekst += "\n".join(rapport)
 
@@ -372,9 +364,10 @@ if __name__ == "__main__":
     config = laad_config()
     vraag_huidige_staat_op()
 
-    stap3 = configureer_interface(config)
-    stap4 = configureer_ospf(config)
-    stap5 = configureer_monitoring(config)
+    stap3  = configureer_interface(config)
+    stap4  = configureer_ospf(config)
+    stap5  = configureer_monitoring(config)
+    stap5b = configureer_snmp(config)
 
     if stap3 and stap4 and stap5:
         valideer(config)

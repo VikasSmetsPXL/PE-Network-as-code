@@ -1,0 +1,196 @@
+Automatisatierapport — 2026-05-15 14:55:04
+
+🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 
+   VOLLEDIGE END-TO-END NETWERK AUTOMATISATIE
+🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 
+
+=======================================================
+📄 STAP 1: Gewenste configuratie inladen
+=======================================================
+  Hostname    : CSR1000v-LAB
+  Interface   : GigabitEthernet2 — 10.0.0.1
+  OSPF        : Process 1 — Area 0
+  NTP Server  : 216.239.35.0
+  Syslog      : 192.168.56.1
+  SNMP        : community 'public' (RO)
+  Banner      : *** Beheerd via NETCONF automatisatie - ...
+
+=======================================================
+📊 STAP 2: Huidige staat opvragen via NETCONF
+=======================================================
+  Interface            Enabled
+  -----------------------------------
+  GigabitEthernet1     true
+  GigabitEthernet2     true
+  GigabitEthernet3     false
+  GigabitEthernet4     false
+
+=======================================================
+⚙️  STAP 3: Hostname + Interface configureren
+=======================================================
+  📥 XML ophalen van GitHub:
+  https://raw.githubusercontent.com/VIKASSmetsPXL/PE-Network-as-code/main/netconf/yang/interface_hostname_config.xml
+  ✅ XML succesvol opgehaald (HTTP 200)
+  📤 Raw NETCONF XML verstuurd:
+  ---------------------------------------------
+  <config>
+      <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
+          <hostname>CSR1000v-LAB</hostname>
+      </native>
+      <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
+          <interface>
+              <name>GigabitEthernet2</name>
+              <description>Geconfigureerd via NETCONF automatisatie</description>
+              <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">
+                  ianaift:ethernetCsmacd
+              </type>
+              <enabled>true</enabled>
+              <ipv4 xmlns="urn:ietf:params:xml:ns:yang:ietf-ip">
+                  <address>
+                      <ip>10.0.0.1</ip>
+                      <netmask>255.255.255.0</netmask>
+                  </address>
+              </ipv4>
+          </interface>
+      </interfaces>
+  </config>
+  ---------------------------------------------
+  ✅ NETCONF <ok/> — Hostname + Interface succesvol geconfigureerd!
+
+=======================================================
+🔀 STAP 4: OSPF configureren
+=======================================================
+  📥 XML ophalen van GitHub:
+  https://raw.githubusercontent.com/VIKASSmetsPXL/PE-Network-as-code/main/netconf/yang/ospf_config.xml
+  ✅ XML succesvol opgehaald (HTTP 200)
+  📤 Raw NETCONF XML verstuurd:
+  ---------------------------------------------
+  <config>
+      <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
+          <router>
+              <ospf xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-ospf">
+                  <id>1</id>
+                  <network>
+                      <ip>10.0.0.0</ip>
+                      <mask>0.0.0.255</mask>
+                      <area>0</area>
+                  </network>
+              </ospf>
+          </router>
+      </native>
+  </config>
+  ---------------------------------------------
+  ✅ NETCONF <ok/> — OSPF succesvol geconfigureerd!
+
+=======================================================
+📡 STAP 5: NTP + Banner configureren
+=======================================================
+  📥 XML ophalen van GitHub:
+  https://raw.githubusercontent.com/VIKASSmetsPXL/PE-Network-as-code/main/netconf/yang/monitoring_config.xml
+  ✅ XML succesvol opgehaald (HTTP 200)
+  📤 Raw NETCONF XML verstuurd:
+  ---------------------------------------------
+  <config>
+      <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
+  
+          <!-- NTP Server -->
+          <ntp>
+              <server xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-ntp">
+                  <server-list>
+                      <ip-address>216.239.35.0</ip-address>
+                  </server-list>
+              </server>
+          </ntp>
+  
+          <!-- Banner -->
+          <banner>
+              <motd>
+                  <banner>*** Beheerd via NETCONF automatisatie - Onbevoegde toegang verboden ***</banner>
+              </motd>
+          </banner>
+  
+      </native>
+  </config>
+  ---------------------------------------------
+  ✅ NETCONF <ok/> — NTP + Banner succesvol geconfigureerd!
+
+=======================================================
+🔒 STAP 5b: SNMP configureren
+=======================================================
+  📥 XML ophalen van GitHub:
+  https://raw.githubusercontent.com/VIKASSmetsPXL/PE-Network-as-code/main/netconf/yang/snmp_config.xml
+  ✅ XML succesvol opgehaald (HTTP 200)
+  📤 Raw NETCONF XML verstuurd:
+  ---------------------------------------------
+  <config>
+      <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
+          <snmp-server>
+              <community>
+                  <name>public</name>
+                  <RO/>
+              </community>
+          </snmp-server>
+      </native>
+  </config>
+  ---------------------------------------------
+  ❌ Fout bij SNMP: {'type': 'application', 'tag': 'unknown-element', 'app_tag': None, 'severity': 'error', 'info': '<?xml version="1.0" encoding="UTF-8"?><error-info xmlns="urn:ietf:params:xml:ns:netconf:base:1.0" xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"><bad-element>community</bad-element>\n</error-info>\n', 'path': '\n    /nc:rpc/nc:edit-config/nc:config/ios:native/ios:snmp-server/ios:community\n  ', 'message': None}
+
+=======================================================
+✔️  STAP 6: Validatie via RESTCONF
+=======================================================
+
+  📤 Raw RESTCONF URL:
+  GET https://192.168.56.103/restconf/data/ietf-interfaces:interfaces/interface=GigabitEthernet2
+  📥 Raw response:
+  {
+  "ietf-interfaces:interface": {
+    "name": "GigabitEthernet2",
+    "description": "Geconfigureerd via NETCONF automatisatie",
+    "type": "iana-if-type:ethernetCsmacd",
+    "enabled": true,
+    "i...
+  ✅ Interface       HTTP 200 OK
+
+  📤 Raw RESTCONF URL:
+  GET https://192.168.56.103/restconf/data/Cisco-IOS-XE-native:native/hostname
+  📥 Raw response:
+  {
+  "Cisco-IOS-XE-native:hostname": "CSR1000v-LAB"
+}
+...
+  ✅ Hostname        HTTP 200 OK
+
+  📤 Raw RESTCONF URL:
+  GET https://192.168.56.103/restconf/data/Cisco-IOS-XE-native:native/ntp
+  📥 Raw response:
+  {
+  "Cisco-IOS-XE-native:ntp": {
+    "Cisco-IOS-XE-ntp:server": {
+      "server-list": [
+        {
+          "ip-address": "216.239.35.0"
+        }
+      ]
+    }
+  }
+}
+...
+  ✅ NTP             HTTP 200 OK
+
+  📊 SNMP verificatie:
+  ❌ SNMP fout: cannot import name 'getCmd' from 'pysnmp.hlapi' (unknown location)
+
+=======================================================
+📈 STAP 7: Operationele data opvragen via NETCONF
+=======================================================
+  Interface    : GigabitEthernet2
+  Admin status : up
+  Oper status  : up
+  In octets    : 61003
+  Out octets   : 36342
+  In errors    : 0
+  💾 Opgeslagen in output/operationele_data.json
+
+=======================================================
+📋 STAP 8: Rapport genereren
+=======================================================
