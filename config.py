@@ -1,0 +1,5 @@
+# config.py
+ROUTER_HOST = "192.168.56.103"
+ROUTER_PORT = 830
+ROUTER_USER = "admin"
+ROUTER_PASS = "pxl"
