@@ -1,14 +1,13 @@
-# config.py
-
-VIRTUAL_ROUTER = False
+VIRTUAL_ROUTER = True
 
 if VIRTUAL_ROUTER:
     ROUTER_HOST = "192.168.56.103"
-    ROUTER_PASS = "pxl"          # ← was "admin", moet "pxl" zijn
+    ROUTER_PASS = "pxl"
+    ROUTER_USER = "admin"
 else:
     ROUTER_HOST = "10.199.65.107"
     ROUTER_PASS = "pxl"
+    ROUTER_USER = "admin"
 
 ROUTER_PORT = 830
-ROUTER_USER = "admin"
 YANG_SUFFIX = "" if VIRTUAL_ROUTER else "_fysiek"
