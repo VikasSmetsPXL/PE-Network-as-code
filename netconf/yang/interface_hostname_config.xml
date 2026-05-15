@@ -1,0 +1,21 @@
+<config>
+    <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
+        <hostname>CSR1000v-LAB</hostname>
+    </native>
+    <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
+        <interface>
+            <name>GigabitEthernet2</name>
+            <description>Geconfigureerd via NETCONF automatisatie</description>
+            <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">
+                ianaift:ethernetCsmacd
+            </type>
+            <enabled>true</enabled>
+            <ipv4 xmlns="urn:ietf:params:xml:ns:yang:ietf-ip">
+                <address>
+                    <ip>10.0.0.1</ip>
+                    <netmask>255.255.255.0</netmask>
+                </address>
+            </ipv4>
+        </interface>
+    </interfaces>
+</config>
