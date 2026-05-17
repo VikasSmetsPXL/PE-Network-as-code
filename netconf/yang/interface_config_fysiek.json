@@ -1,0 +1,27 @@
+{
+    "interface": {
+        "name": "GigabitEthernet0/0/2",
+        "description": "Geconfigureerd via NETCONF automatisatie",
+        "enabled": true,
+        "ip_address": "172.17.4.33",
+        "subnet_mask": "255.255.255.240"
+    },
+    "hostname": "LAB-RA04-C01-R01",
+    "ospf": {
+        "process_id": 1,
+        "network": "172.17.4.0",
+        "wildcard": "0.0.0.31",
+        "area": 0
+    },
+    "ntp": {
+        "server": "216.239.35.0"
+    },
+    "syslog": {
+        "server": "10.199.64.66"
+    },
+    "snmp": {
+        "community": "public",
+        "rechten": "RO"
+    },
+    "banner": "*** Beheerd via NETCONF automatisatie - Onbevoegde toegang verboden ***"
+}
