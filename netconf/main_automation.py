@@ -11,7 +11,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from config import ROUTER_HOST, ROUTER_PORT, ROUTER_USER, ROUTER_PASS, YANG_SUFFIX
+from config import ROUTER_HOST, ROUTER_PORT, ROUTER_USER, ROUTER_PASS, YANG_SUFFIX, VIRTUAL_ROUTER
 
 BASE_URL = f"https://{ROUTER_HOST}/restconf/data"
 HEADERS  = {
@@ -100,7 +100,8 @@ def stuur_netconf(config_xml, naam):
 # STAP 1: Config inladen
 # ============================================================
 def laad_config():
-    config_pad = os.path.join(os.path.dirname(__file__), 'yang', 'interface_config.json')
+    bestand = 'interface_config.json' if VIRTUAL_ROUTER else 'interface_config_fysiek.json'
+    config_pad = os.path.join(os.path.dirname(__file__), 'yang', bestand)
     with open(config_pad, 'r') as f:
         config = json.load(f)
 
