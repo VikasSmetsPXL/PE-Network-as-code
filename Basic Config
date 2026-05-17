@@ -1,0 +1,89 @@
+# Netwerkconfiguratie
+
+## R01
+
+```cisco
+enable
+conf t
+
+hostname LAB-RA04-C01-R01
+
+interface gig0/0/1
+ ip address 10.199.65.107 255.255.255.224
+ no shutdown
+
+interface gig0/0/0
+ no shutdown
+
+interface gig0/0/0.1
+ encapsulation dot1Q 1
+ ip address 172.17.4.1 255.255.255.240
+
+interface gig0/0/0.2
+ encapsulation dot1Q 2
+ ip address 172.17.4.17 255.255.255.240
+ ip helper-address 10.199.64.66
+
+ip route 0.0.0.0 0.0.0.0 10.199.65.100
+
+ip domain name pxl.local
+
+username admin privilege 15 secret pxl
+
+crypto key generate rsa
+ 2048
+
+ip ssh version 2
+
+line vty 0 4
+ login local
+ transport input ssh
+ exit
+
+netconf-yang
+
+restconf
+
+ip http server
+ip http secure-server
+ip http authentication local
+
+end
+write memory
+
+show netconf-yang status
+show platform software yang-management process
+```
+
+---
+
+## SW01
+
+```cisco
+enable
+conf t
+
+hostname LAB-RA04-A01-SW01
+
+vlan 1
+ name Management
+
+vlan 2
+ name Data_Users
+
+interface gig1/0/20
+ switchport mode trunk
+
+interface gig1/0/2
+ switchport mode access
+ switchport access vlan 2
+ spanning-tree portfast
+
+interface vlan 1
+ ip address 172.17.4.4 255.255.255.240
+ no shutdown
+
+ip default-gateway 172.17.4.1
+
+end
+```
