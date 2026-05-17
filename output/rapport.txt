@@ -1,4 +1,4 @@
-Automatisatierapport — 2026-05-15 15:23:15
+Automatisatierapport — 2026-05-17 12:48:36
 
 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 🚀 
    VOLLEDIGE END-TO-END NETWERK AUTOMATISATIE
@@ -191,8 +191,8 @@ Automatisatierapport — 2026-05-15 15:23:15
   Interface    : GigabitEthernet2
   Admin status : up
   Oper status  : up
-  In octets    : 66997
-  Out octets   : 64448
+  In octets    : 74764
+  Out octets   : 86592
   In errors    : 0
   💾 Opgeslagen in output/operationele_data.json
 
