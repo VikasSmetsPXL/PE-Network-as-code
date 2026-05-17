@@ -1,13 +1,13 @@
-# PE-Network-as-
+
 # PE-Network-as-code
 
-## 📋 Projectbeschrijving
+##  Projectbeschrijving
 
 Dit project automatiseert de configuratie van een Cisco IOS-XE router via **NETCONF** en **RESTCONF** met behulp van Python en YANG-modellen. De configuratie wordt beheerd als **Infrastructure as Code** — alle XML configuratiebestanden staan op GitHub als single source of truth.
 
 ---
 
-## 🏗️ Projectstructuur
+##  Projectstructuur
 
 ```text
 PE-Network-as-code/
@@ -36,7 +36,7 @@ PE-Network-as-code/
 
 ---
 
-## ⚙️ Vereisten
+##  Vereisten
 
 ### Python libraries installeren
 
@@ -46,7 +46,7 @@ pip install ncclient requests xmltodict paramiko
 
 ---
 
-## 🔧 Configuratie
+##  Configuratie
 
 Pas `config.py` aan om te wisselen tussen virtuele en fysieke router:
 
@@ -75,7 +75,7 @@ write memory
 
 ---
 
-## 🚀 Gebruik
+##  Gebruik
 
 ### Volledige end-to-end automatisatie
 
@@ -100,7 +100,7 @@ python restconf_get.py
 
 ---
 
-## 📡 Automatisatiestappen
+##  Automatisatiestappen
 
 | Stap | Beschrijving | Protocol |
 |------|-------------|----------|
@@ -116,7 +116,7 @@ python restconf_get.py
 
 ---
 
-## 🗂️ Infrastructure as Code
+##  Infrastructure as Code
 
 Alle XML configuratiebestanden worden opgehaald van GitHub via raw URLs:  
 https://raw.githubusercontent.com/VIKASSmetsPXL/PE-Network-as-code/main/netconf/yang/
@@ -125,7 +125,7 @@ GitHub is de **single source of truth** — wijzig een XML bestand op GitHub en 
 
 ---
 
-## 🔒 Foutafhandeling
+##  Foutafhandeling
 
 - **NETCONF**: `<ok/>` bij succes, `RPCError` bij foute configuratie
 - **RESTCONF**: HTTP statuscodes 200, 201, 204, 400, 401, 404, 500
@@ -133,7 +133,7 @@ GitHub is de **single source of truth** — wijzig een XML bestand op GitHub en 
 
 ---
 
-## 📊 YANG Modellen
+##  YANG Modellen
 
 | YANG Model | Gebruik |
 |------------|---------|
