@@ -126,32 +126,33 @@ def vraag_huidige_staat_op():
     log(f"{'='*55}")
 
     filter_xml = """
-    <filter>
-        <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
-            <interface/>
-        </interfaces>
-    </filter>
+    <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
+        <interface/>
+    </interfaces>
     """
 
     try:
         with manager.connect(**connect_params) as m:
-            response = m.get_config(source='running', filter=filter_xml)
+            response = m.get_config(source='running', filter=('subtree', filter_xml))
             parsed   = xmltodict.parse(response.xml)
 
+            data = parsed.get('rpc-reply', {}).get('data', {})
             interfaces = (
-                parsed.get('rpc-reply', {})
-                      .get('data', {})
-                      .get('interfaces', {})
-                      .get('interface', [])
+                data.get('interfaces', data.get('ietf-interfaces:interfaces', {}))
+                    .get('interface', [])
             )
+
+            if not interfaces:
+                log("  ⚠️  Geen interfaces gevonden")
+                return []
 
             if isinstance(interfaces, dict):
                 interfaces = [interfaces]
 
-            log(f"  {'Interface':<20} {'Enabled'}")
+            log(f"  {'Interface':<25} {'Enabled'}")
             log(f"  {'-'*35}")
             for intf in interfaces:
-                log(f"  {intf.get('name','?'):<20} {intf.get('enabled','?')}")
+                log(f"  {intf.get('name','?'):<25} {intf.get('enabled','?')}")
 
             return interfaces
 
@@ -322,26 +323,27 @@ def vraag_operationele_data_op(config):
     intf_naam = config['interface']['name']
 
     filter_xml = f"""
-    <filter>
-        <interfaces-state xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
-            <interface>
-                <name>{intf_naam}</name>
-            </interface>
-        </interfaces-state>
-    </filter>
+    <interfaces-state xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
+        <interface>
+            <name>{intf_naam}</name>
+        </interface>
+    </interfaces-state>
     """
 
     try:
         with manager.connect(**connect_params) as m:
-            response = m.get(filter=filter_xml)
+            response = m.get(filter=('subtree', filter_xml))
             parsed   = xmltodict.parse(response.xml)
 
+            data       = parsed.get('rpc-reply', {}).get('data', {})
             intf_state = (
-                parsed.get('rpc-reply', {})
-                      .get('data', {})
-                      .get('interfaces-state', {})
-                      .get('interface', {})
+                data.get('interfaces-state', data.get('ietf-interfaces:interfaces-state', {}))
+                    .get('interface', {})
             )
+
+            if not intf_state:
+                log("  ⚠️  Geen operationele data gevonden")
+                return
 
             stats    = intf_state.get('statistics', {})
             naam_raw = intf_state.get('name', '?')

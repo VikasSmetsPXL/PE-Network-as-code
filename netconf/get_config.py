@@ -5,6 +5,8 @@ import xmltodict
 import json
 import sys
 import os
+import warnings
+warnings.filterwarnings("ignore")
 
 # Config importeren
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -14,11 +16,9 @@ def get_interfaces():
     """Haalt interface configuratie op via NETCONF en parsed XML naar JSON."""
 
     filter_xml = """
-    <filter>
-        <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
-            <interface/>
-        </interfaces>
-    </filter>
+    <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
+        <interface/>
+    </interfaces>
     """
 
     print(f"\n{'='*50}")
@@ -42,7 +42,7 @@ def get_interfaces():
 
             print("✅ NETCONF verbinding geslaagd!\n")
 
-            response = m.get_config(source='running', filter=filter_xml)
+            response = m.get_config(source='running', filter=('subtree', filter_xml))
 
             xml_data = response.xml
             print("📄 Ruwe XML response ontvangen")
@@ -62,12 +62,16 @@ def get_interfaces():
             print("🌐 INTERFACES OP DE ROUTER:")
             print(f"{'='*50}")
 
+            data = parsed.get('rpc-reply', {}).get('data', {})
+
             interfaces = (
-                parsed.get('rpc-reply', {})
-                      .get('data', {})
-                      .get('interfaces', {})
-                      .get('interface', [])
+                data.get('interfaces', data.get('ietf-interfaces:interfaces', {}))
+                    .get('interface', [])
             )
+
+            if not interfaces:
+                print("  ⚠️  Geen interfaces gevonden in response")
+                return
 
             if isinstance(interfaces, dict):
                 interfaces = [interfaces]
