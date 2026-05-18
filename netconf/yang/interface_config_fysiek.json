@@ -1,6 +1,6 @@
 {
     "interface": {
-        "name": "GigabitEthernet0/0/0.3",
+        "name": "GigabitEthernet0/0/0",
         "description": "Geconfigureerd via NETCONF automatisatie",
         "enabled": true,
         "ip_address": "172.17.4.33",
