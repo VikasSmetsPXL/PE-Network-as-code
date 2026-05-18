@@ -4,18 +4,9 @@
     </native>
     <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
         <interface>
-            <name>GigabitEthernet0/0/0.3</name>
+            <name>GigabitEthernet0/0/0</name>
             <description>Geconfigureerd via NETCONF automatisatie</description>
-            <type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">
-                ianaift:ethernetCsmacd
-            </type>
             <enabled>true</enabled>
-            <ipv4 xmlns="urn:ietf:params:xml:ns:yang:ietf-ip">
-                <address>
-                    <ip>172.17.4.33</ip>
-                    <netmask>255.255.255.240</netmask>
-                </address>
-            </ipv4>
         </interface>
     </interfaces>
 </config>
