@@ -7,8 +7,21 @@ Dit project automatiseert de configuratie van een Cisco IOS-XE router via **NETC
 
 ---
 
-##  Projectstructuur
+## 📡 Automatisatiestappen
 
+| Stap | Wat | Protocol |
+|------|-----|----------|
+| 1 | Gewenste configuratie inladen uit JSON | — |
+| 2 | Huidige interfaces opvragen | NETCONF |
+| 3 | Hostname + interface configureren via GitHub XML | NETCONF + YANG |
+| 4 | OSPF configureren via GitHub XML | NETCONF + YANG |
+| 5 | NTP + Banner configureren via GitHub XML | NETCONF + YANG |
+| 5b | SNMP configureren | RESTCONF |
+| 6 | Validatie — werkt alles correct? | RESTCONF |
+| 7 | Operationele data opvragen (statistieken) | NETCONF |
+| 8 | Rapport opslaan | — |
+
+##  Projectstructuur
 ```text
 PE-Network-as-code/
 │
